@@ -1,4 +1,4 @@
-package com.rabbit.hx;
+package com.rabbit.client;
 
 import com.rabbitmq.client.*;
 
