@@ -1,6 +1,9 @@
 package com.rabbit.client;
 
-import com.rabbitmq.client.*;
+
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.ConnectionFactory;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeoutException;
@@ -8,12 +11,11 @@ import java.util.concurrent.TimeoutException;
 /**
  * Created by xing on 2016/6/9.
  */
-public class Comsumer {
+public class Consumer {
     private static final String TASK_QUEUE_NAME = "task_queue";
     private static final String TASK_EXCHANGE_NAME = "task_exchange";
     private static final String TASK_KEY_NAME = "task_key";
     public static void main(String[] argv) throws java.io.IOException, java.lang.InterruptedException, TimeoutException {
-
 
         ConnectionFactory factory = new ConnectionFactory();
         factory.setHost("192.168.174.128");
@@ -31,14 +33,14 @@ public class Comsumer {
         // 指定该消费者同时只接收一条消息
         channel.basicQos(1);
 
-        QueueingConsumer consumer = new QueueingConsumer(channel);
+        com.rabbitmq.client.QueueingConsumer consumer = new com.rabbitmq.client.QueueingConsumer(channel);
 
         // 打开消息应答机制
         channel.basicConsume(TASK_QUEUE_NAME, false, consumer);
 
         while (true) {
-            QueueingConsumer.Delivery delivery = consumer.nextDelivery();
-            AMQP.BasicProperties props =  delivery.getProperties() ;
+            com.rabbitmq.client.QueueingConsumer.Delivery delivery = consumer.nextDelivery();
+            com.rabbitmq.client.AMQP.BasicProperties props =  delivery.getProperties() ;
             String message = new String(delivery.getBody());
             try {
                 Thread.currentThread().sleep(2000);
@@ -48,11 +50,11 @@ public class Comsumer {
             System.out.println(" [comsumer] Received '" + message + "'");
             doWork(message);
             System.out.println(" [comsumer] Done");
-            AMQP.BasicProperties responseProps = new AMQP.BasicProperties.Builder()
+            com.rabbitmq.client.AMQP.BasicProperties responseProps = new com.rabbitmq.client.AMQP.BasicProperties.Builder()
                     .correlationId(props.getCorrelationId())
                     .build() ;
 
-            //将结果返回到客户端Queue
+            //将结果返回到客户端Queue,""是默认的exchange 绑定所有的队列
             channel.basicPublish("", props.getReplyTo() , responseProps , ("[comsumer] get it"+java.time.LocalDateTime.now()).getBytes("UTF-8") ) ;
 
             //向客户端确认消息
